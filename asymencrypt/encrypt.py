@@ -1,6 +1,9 @@
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.backends import default_backend
+from fastapi import FastAPI, Response
+
+app = FastAPI()
 
 # create the keys
 def key_pair():
@@ -11,30 +14,6 @@ def key_pair():
     public_key=private_key.public_key()
     return private_key, public_key
 
-# encrypt message
-def encrypt(message, public_key):
-    ciphertext = public_key.encrypt(
-        message.encode(),
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA256()),
-            algorithm=hashes.SHA256(),
-            label=None
-        )
-    )
-    return ciphertext
-
-
-# decrypt with private key
-def decrypt(ciphertext, private_key):
-    plaintext = private_key.decrypt(
-        ciphertext,
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA256()),
-            algorithm=hashes.SHA256(),
-            label=None
-        )
-    )
-    return plaintext.decode()
 
 # save the key function
 def save_key(key, filename):
@@ -49,10 +28,6 @@ def load_key(filename):
             password=None,
         )
     return key
-
-
-
-
 
 
 
@@ -76,9 +51,34 @@ save_key(public_key.public_bytes(
 # loaded_public_key = load_key('public_key.pem')
 
 
+@app.route("/encrypt", method=['POST'])
+# encrypt message
+def encrypt(message, public_key):
+    ciphertext = public_key.encrypt(
+        message.encode(),
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    return ciphertext
 
 message = input("Enter message to encryt: ")
 ciphertext = encrypt(message, public_key)
-decrypted_message = decrypt(ciphertext, private_key)
 print(f"Encrypted message: {ciphertext}")
+
+@app.route("/decrypt", method=['GET'])
+# decrypt with private key
+def decrypt(ciphertext, private_key):
+    plaintext = private_key.decrypt(
+        ciphertext,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    return plaintext.decode()
+decrypted_message = decrypt(ciphertext, private_key)
 #print(f"Decrypted message: {decrypted_message}")
