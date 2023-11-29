@@ -29,3 +29,7 @@ python -m pip install --upgrade pip
 ```
 
 RUN
+
+```sh
+uvicorn encrypt:app --reload
+```
